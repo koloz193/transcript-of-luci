@@ -10,12 +10,17 @@ contract TranscriptOfLuciTest is Test {
     address public bob;
     address public charles;
     address public nft;
+    address public base;
+    uint256 public tokenId;
 
     function setUp() public {
         alice = makeAddr("alice");
         bob = makeAddr("bob");
         charles = makeAddr("charles");
         nft = makeAddr("nft");
+        base = makeAddr("base");
+
+        tokenId = uint256(keccak256("TOKEN_ID"));
 
         transcript = new TranscriptOfLuci(false);
         transcript.initialize(alice);
@@ -27,9 +32,9 @@ contract TranscriptOfLuciTest is Test {
 
     function test_addComment() public {
         vm.prank(bob);
-        transcript.addComment(4720423717920495500000000, 3063794169465206600000000, charles, "Does anything truly exist beyond our own mind? We see only what our mind allows, the picture through the foggy lens of fear and hope. I see the best of me, building the temple of a better world, lending a hand to those that still cling to solid ground for fear to Wander the unknown. I see the worst of me, the masks I wear, the moments where I'm raw and cruel and push others away. And all the while she holds me at the edge, I feel her hand in mine, and I see not what I am, but the best that I can be.");
+        transcript.addComment(base, tokenId, 4720423717920495500000000, 3063794169465206600000000, charles, "Does anything truly exist beyond our own mind? We see only what our mind allows, the picture through the foggy lens of fear and hope. I see the best of me, building the temple of a better world, lending a hand to those that still cling to solid ground for fear to Wander the unknown. I see the worst of me, the masks I wear, the moments where I'm raw and cruel and push others away. And all the while she holds me at the edge, I feel her hand in mine, and I see not what I am, but the best that I can be.");
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(4720423717920495500000000, 3063794169465206600000000);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 4720423717920495500000000, 3063794169465206600000000);
         assertEq(comments.length, 1, "comment length");
 
         console.log(comments[0].commenter);
@@ -40,7 +45,7 @@ contract TranscriptOfLuciTest is Test {
 
     function test_addCommentForNft() public {
         vm.prank(bob);
-        transcript.addCommentForNft(420, 120, alice, "hello again, world!", nft, 1);
+        transcript.addCommentForNft(base, tokenId, 420, 120, alice, "hello again, world!", nft, 1);
 
         Comment memory comment = transcript.getCommentForNft(nft, 1);
         console.log(comment.commenter);
@@ -51,11 +56,11 @@ contract TranscriptOfLuciTest is Test {
 
     function test_addMultipleComments() public {
         vm.startPrank(bob);
-        transcript.addComment(120, 420, charles, "hello, world!");
-        transcript.addComment(120, 420, alice, "im here too!");
+        transcript.addComment(base, tokenId, 120, 420, charles, "hello, world!");
+        transcript.addComment(base, tokenId, 120, 420, alice, "im here too!");
         vm.stopPrank();
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(120, 420);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 120, 420);
         assertEq(comments.length, 2, "comment length");
 
         console.log(comments[0].commenter);
@@ -87,10 +92,10 @@ contract TranscriptOfLuciTest is Test {
         messages[1] = "im here too!";
 
         vm.startPrank(bob);
-        transcript.batchAddComments(xs, ys, commenters, messages);
+        transcript.batchAddComments(base, tokenId, xs, ys, commenters, messages);
         vm.stopPrank();
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(120, 420);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 120, 420);
         assertEq(comments.length, 2, "comment length");
 
         console.log(comments[0].commenter);
@@ -122,10 +127,10 @@ contract TranscriptOfLuciTest is Test {
         messages[1] = "im here too!";
 
         vm.startPrank(bob);
-        transcript.batchAddComments(xs, ys, commenters, messages);
+        transcript.batchAddComments(base, tokenId, xs, ys, commenters, messages);
         vm.stopPrank();
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(120, 420);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 120, 420);
         assertEq(comments.length, 1, "comment length");
 
         console.log(comments[0].commenter);
@@ -134,7 +139,7 @@ contract TranscriptOfLuciTest is Test {
         console.log(comments[0].coordinate.y);
         console.log();
 
-        comments = transcript.getCommentForCoordinates(420, 120);
+        comments = transcript.getCommentForCoordinates(base, tokenId, 420, 120);
         assertEq(comments.length, 1, "comment length");
 
         console.log(comments[0].commenter);
@@ -169,10 +174,10 @@ contract TranscriptOfLuciTest is Test {
         tokenIds[1] = 2;
 
         vm.startPrank(bob);
-        transcript.batchAddCommentsForNfts(xs, ys, commenters, messages, nftContracts, tokenIds);
+        transcript.batchAddCommentsForNfts(base, tokenId, xs, ys, commenters, messages, nftContracts, tokenIds);
         vm.stopPrank();
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(120, 420);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 120, 420);
         assertEq(comments.length, 2, "comment length");
 
         console.log(comments[0].commenter);
@@ -225,10 +230,10 @@ contract TranscriptOfLuciTest is Test {
         tokenIds[1] = 2;
 
         vm.startPrank(bob);
-        transcript.batchAddCommentsForNfts(xs, ys, commenters, messages, nftContracts, tokenIds);
+        transcript.batchAddCommentsForNfts(base, tokenId, xs, ys, commenters, messages, nftContracts, tokenIds);
         vm.stopPrank();
 
-        Comment[] memory comments = transcript.getCommentForCoordinates(120, 420);
+        Comment[] memory comments = transcript.getCommentForCoordinates(base, tokenId, 120, 420);
         assertEq(comments.length, 1, "comment length");
 
         console.log(comments[0].commenter);
@@ -237,7 +242,7 @@ contract TranscriptOfLuciTest is Test {
         console.log(comments[0].coordinate.y);
         console.log();
 
-        comments = transcript.getCommentForCoordinates(420, 120);
+        comments = transcript.getCommentForCoordinates(base, tokenId, 420, 120);
         assertEq(comments.length, 1, "comment length");
 
         console.log(comments[0].commenter);

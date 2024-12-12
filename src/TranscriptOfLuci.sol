@@ -31,11 +31,14 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
                             Private Storage Variables
     //////////////////////////////////////////////////////////////////////////*/
 
-    mapping(uint256 x => mapping(uint256 y => uint256[] commentIndexes))
-        private comments;
+    // mapping(uint256 x => mapping(uint256 y => uint256[] commentIndexes))
+    //     private comments;
 
     mapping(address nftContract => mapping(uint256 tokenId => uint256 commentIndex))
         private commentByNft;
+
+    mapping(address nftContract => mapping(uint256 tokenId => mapping(uint256 x => mapping(uint256 y => uint256[] commentIndexes))))
+        private comments;
 
     Comment[] private rawComments;
 
@@ -67,6 +70,8 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
     //////////////////////////////////////////////////////////////////////////*/
 
     function addComment(
+        address _nftContract,
+        uint256 _tokenId,
         uint256 _x,
         uint256 _y,
         address _commenter,
@@ -80,10 +85,12 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
             coordinate: coord
         });
 
-        _addComment(_x, _y, comment);
+        _addComment(_nftContract, _tokenId, _x, _y, comment);
     }
 
     function addCommentForNft(
+        address _baseContract,
+        uint256 _baseTokenId,
         uint256 _x,
         uint256 _y,
         address _commenter,
@@ -99,10 +106,12 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
             coordinate: coord
         });
 
-        _addCommentForNft(_x, _y, _nftAddress, _tokenId, comment);
+        _addCommentForNft(_baseContract, _baseTokenId, _x, _y, _nftAddress, _tokenId, comment);
     }
 
     function batchAddComments(
+        address _nftContract,
+        uint256 _tokenId,
         uint256[] calldata _xs,
         uint256[] calldata _ys,
         address[] calldata _commenters,
@@ -117,11 +126,13 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
                 coordinate: coord
             });
 
-            _addComment(_xs[i], _ys[i], comment);
+            _addComment(_nftContract, _tokenId, _xs[i], _ys[i], comment);
         }
     }
 
     function batchAddCommentsForNfts(
+        address _nftContract,
+        uint256 _tokenId,
         uint256[] calldata _xs,
         uint256[] calldata _ys,
         address[] calldata _commenters,
@@ -138,7 +149,7 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
                 coordinate: coord
             });
 
-            _addCommentForNft(_xs[i], _ys[i], _nftAddresses[i], _tokenIds[i], comment);
+            _addCommentForNft(_nftContract, _tokenId, _xs[i], _ys[i], _nftAddresses[i], _tokenIds[i], comment);
         }
     }
 
@@ -147,10 +158,12 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
     //////////////////////////////////////////////////////////////////////////*/
 
     function getCommentForCoordinates(
+        address _nftContract,
+        uint256 _tokenId,
         uint256 _x,
         uint256 _y
     ) external view returns (Comment[] memory commentsForCoordinate) {
-        uint256[] storage indices = comments[_x][_y];
+        uint256[] storage indices = comments[_nftContract][_tokenId][_x][_y];
         uint256 numComments = indices.length;
 
         commentsForCoordinate = new Comment[](numComments);
@@ -174,16 +187,20 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
     //////////////////////////////////////////////////////////////////////////*/
 
     function _addComment(
+        address _nftContract,
+        uint256 _tokenId,
         uint256 _x,
         uint256 _y,
         Comment memory _comment
     ) internal {
         rawComments.push(_comment);
         uint256 index = rawComments.length - 1;
-        comments[_x][_y].push(index);
+        comments[_nftContract][_tokenId][_x][_y].push(index);
     }
 
     function _addCommentForNft(
+        address _baseContract,
+        uint256 _baseId,
         uint256 _x,
         uint256 _y,
         address _nftContract,
@@ -194,6 +211,6 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         uint256 index = rawComments.length - 1;
 
         commentByNft[_nftContract][_tokenId] = index;
-        comments[_x][_y].push(index);
+        comments[_baseContract][_baseId][_x][_y].push(index);
     }
 }
