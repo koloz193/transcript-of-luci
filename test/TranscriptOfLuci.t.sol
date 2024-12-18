@@ -11,6 +11,7 @@ contract TranscriptOfLuciTest is Test {
     address public charles;
     address public nft;
     address public base;
+    address public falseBase;
     uint256 public tokenId;
 
     function setUp() public {
@@ -19,6 +20,7 @@ contract TranscriptOfLuciTest is Test {
         charles = makeAddr("charles");
         nft = makeAddr("nft");
         base = makeAddr("base");
+        falseBase = makeAddr("falseBase");
 
         tokenId = uint256(keccak256("TOKEN_ID"));
 
@@ -26,8 +28,17 @@ contract TranscriptOfLuciTest is Test {
         transcript.initialize(alice);
 
         vm.startPrank(alice);
+        transcript.addApprovedBase(base);
+
+        vm.startPrank(alice);
         transcript.grantRole(transcript.COMMENTER_ROLE(), bob);
         vm.stopPrank();
+    }
+
+    function test_addComment_revert() public {
+        vm.prank(bob);
+        vm.expectRevert(abi.encodeWithSelector(TranscriptOfLuci.BaseNotApproved.selector, falseBase));
+        transcript.addComment(falseBase, tokenId, 4720423717920495500000000, 3063794169465206600000000, charles, "Does anything truly exist beyond our own mind? We see only what our mind allows, the picture through the foggy lens of fear and hope. I see the best of me, building the temple of a better world, lending a hand to those that still cling to solid ground for fear to Wander the unknown. I see the worst of me, the masks I wear, the moments where I'm raw and cruel and push others away. And all the while she holds me at the edge, I feel her hand in mine, and I see not what I am, but the best that I can be.");
     }
 
     function test_addComment() public {

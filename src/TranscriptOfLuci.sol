@@ -28,6 +28,23 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         bytes32(uint256(keccak256("COMMENTER_ROLE")) - 1);
 
     /*//////////////////////////////////////////////////////////////////////////
+                                   Errors
+    //////////////////////////////////////////////////////////////////////////*/
+
+    error BaseNotApproved(address _baseContract);
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                  Modifiers
+    //////////////////////////////////////////////////////////////////////////*/
+
+    modifier onlyIfBaseApproved(address _baseContract) {
+        if (!approvedBaseNfts[_baseContract]) {
+            revert BaseNotApproved(_baseContract);
+        }
+        _;
+    }
+
+    /*//////////////////////////////////////////////////////////////////////////
                             Private Storage Variables
     //////////////////////////////////////////////////////////////////////////*/
 
@@ -39,6 +56,8 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
 
     mapping(address nftContract => mapping(uint256 tokenId => mapping(uint256 x => mapping(uint256 y => uint256[] commentIndexes))))
         private comments;
+
+    mapping(address nftContract => bool isApprovedBase) private approvedBaseNfts;
 
     Comment[] private rawComments;
 
@@ -76,7 +95,7 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         uint256 _y,
         address _commenter,
         string calldata _comment
-    ) external onlyRole(COMMENTER_ROLE) {
+    ) external onlyRole(COMMENTER_ROLE) onlyIfBaseApproved(_nftContract) {
         Coordinate memory coord = Coordinate({x: _x, y: _y});
 
         Comment memory comment = Comment({
@@ -97,7 +116,7 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         string calldata _comment,
         address _nftAddress,
         uint256 _tokenId
-    ) external onlyRole(COMMENTER_ROLE) {
+    ) external onlyRole(COMMENTER_ROLE) onlyIfBaseApproved(_baseContract) {
         Coordinate memory coord = Coordinate({x: _x, y: _y});
 
         Comment memory comment = Comment({
@@ -116,7 +135,7 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         uint256[] calldata _ys,
         address[] calldata _commenters,
         string[] calldata _comments
-    ) external onlyRole(COMMENTER_ROLE) {
+    ) external onlyRole(COMMENTER_ROLE) onlyIfBaseApproved(_nftContract) {
         for (uint256 i = 0; i < _xs.length; ++i) {
             Coordinate memory coord = Coordinate({x: _xs[i], y: _ys[i]});
 
@@ -139,7 +158,7 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
         string[] calldata _comments,
         address[] calldata _nftAddresses,
         uint256[] calldata _tokenIds
-    ) external onlyRole(COMMENTER_ROLE) {
+    ) external onlyRole(COMMENTER_ROLE) onlyIfBaseApproved(_nftContract) {
         for (uint256 i = 0; i < _xs.length; ++i) {
             Coordinate memory coord = Coordinate({x: _xs[i], y: _ys[i]});
 
@@ -212,5 +231,13 @@ contract TranscriptOfLuci is AccessControlUpgradeable, OwnableUpgradeable {
 
         commentByNft[_nftContract][_tokenId] = index;
         comments[_baseContract][_baseId][_x][_y].push(index);
+    }
+
+    function addApprovedBase(address _baseContract) external onlyOwner {
+        approvedBaseNfts[_baseContract] = true;
+    }
+
+    function removeApprovedBase(address _baseContract) external onlyOwner {
+        approvedBaseNfts[_baseContract] = false;
     }
 }
